@@ -1,0 +1,4 @@
+"0",""
+"0","# Adding text labels with custom color"
+"0","text(year_analysis$year, year_analysis$total_strikes, labels = year_analysis$total_strikes, "
+"0","     pos = 3, cex = 0.8, col = label_color, font = 2)"

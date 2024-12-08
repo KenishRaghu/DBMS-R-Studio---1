@@ -1,0 +1,553 @@
+---
+title: "Analysis of Wildlife Strikes in Commercial Aviation"
+author: "Kenish Raghu"
+email: "raghu.ke@northeastern.edu"
+date: "10-23-2024"
+output:
+  html_document: default
+  pdf_document: default
+subtitle: Practicum I CS5200
+---
+
+```{r loadingLib, echo = FALSE, warning = FALSE, message = FALSE, eval = TRUE}
+library(DBI)
+library(RMySQL)
+library(readr)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+
+```
+
+
+```{r db_credentials, echo = FALSE, warning = FALSE, message = FALSE, eval = TRUE}
+# Setting Up Database Connection Credentials
+host <- "kendb3.cfa262emoldq.us-east-2.rds.amazonaws.com"  # AWS RDS endpoint
+port <- 3306  # MySQL default port
+dbname <- "kendb"  # Name of my database
+user <- "admin"  # my MySQL username
+password <- "kenish123"  # my MySQL password
+```
+
+# Establishing Connection to Database
+```{r establishingConnection, echo = TRUE, warning = FALSE, message = FALSE, eval = TRUE}
+con <- dbConnect(RMySQL::MySQL(),
+                 host = host,
+                 port = port,
+                 dbname = dbname,
+                 user = user,
+                 password = password)
+
+# Checking if the connection is successful
+if(!is.null(con)) {
+  print("Connection successful!")
+} else {
+  print("Connection failed.")
+}
+```
+
+## Loading csv data into a dataframe
+```{r loadingCSV, echo = FALSE, warning = FALSE, message = FALSE, eval = TRUE}
+# Loading CSV data into a dataframe
+bds.raw <- read.csv("BirdStrikesData-V4-SuF24.csv", stringsAsFactors = FALSE)
+bds.raw[is.na(bds.raw)] <- "unknown"
+bds.raw[bds.raw == ""] <- "unknown"
+
+# Proof of unknown being inserted
+bds.raw[bds.raw$iid == 208561, ]
+
+```
+
+## Dropping tables ( if they exist )
+```{r droppingTables, echo = FALSE, warning = FALSE, message = FALSE, eval = TRUE}
+# Dropping Tables if they already exist
+dbExecute(con, "DROP TABLE IF EXISTS wildlife_strikes")
+dbExecute(con, "DROP TABLE IF EXISTS conditions")
+dbExecute(con, "DROP TABLE IF EXISTS flights")
+dbExecute(con, "DROP TABLE IF EXISTS airports")
+dbExecute(con, "DROP TABLE IF EXISTS wildlife_sizes")
+
+```
+
+## Table creation 
+```{r creatingTable, echo = TRUE, warning = FALSE, message = FALSE, eval = TRUE}
+# Creating the airports table
+create_airports_table <- "
+CREATE TABLE airports (
+  aid INT PRIMARY KEY AUTO_INCREMENT,
+  airportName TEXT NOT NULL,
+  airportState TEXT NOT NULL,
+  airportCode VARCHAR(3) DEFAULT 'ZZZ'
+);"
+
+dbExecute(con, create_airports_table)
+
+
+# Creating the flights table
+create_flights_table <- "
+CREATE TABLE flights (
+  fid INT PRIMARY KEY,
+  date DATE,
+  originAirport INT,
+  airlineName TEXT,
+  aircraftType TEXT,
+  isHeavy INT,
+  FOREIGN KEY (originAirport) REFERENCES airports (aid)
+);"
+
+dbExecute(con, create_flights_table)
+
+
+# Creating the conditions lookup table
+create_conditions_table <- "
+CREATE TABLE conditions (
+  cid INT PRIMARY KEY AUTO_INCREMENT,
+  sky_condition TEXT NOT NULL,
+  explanation TEXT
+);"
+
+dbExecute(con, create_conditions_table)
+
+
+# Creating the wildlife_sizes lookup table
+create_wildlife_size_table <- "
+CREATE TABLE wildlife_sizes (
+  wlsizeid INT PRIMARY KEY AUTO_INCREMENT,
+  description TEXT NOT NULL
+);"
+
+dbExecute(con, create_wildlife_size_table)
+
+
+# Creating the wildlife_strikes table with foreign key to wildlife_sizes
+create_wildlife_strikes_table <- "
+CREATE TABLE wildlife_strikes (
+  iid INT PRIMARY KEY AUTO_INCREMENT,
+  fid INT,
+  wlsize INT,
+  impact TEXT NOT NULL,
+  altitude INT CHECK (altitude >= 0),
+  conditions INT,
+  FOREIGN KEY (fid) REFERENCES flights (fid),
+  FOREIGN KEY (wlsize) REFERENCES wildlife_sizes (wlsizeid),
+  FOREIGN KEY (conditions) REFERENCES conditions (cid)
+);"
+
+dbExecute(con, create_wildlife_strikes_table)
+
+```
+
+```{r verificationOfTables, echo = FALSE, warning = FALSE, message = FALSE, eval = FALSE}
+##  Verifying Table Definitions are correct
+# Defining the list of tables to check for existence 
+tables_to_check <- c("airports", "flights", "conditions", "wildlife_sizes", "wildlife_strikes")
+
+# Function to check and display only existing tables
+get_existing_tables <- function(con, tables) {
+  # Querying to get the list of tables in the database
+  existing_tables <- dbGetQuery(con, "SHOW TABLES;")
+  
+  # Extracting table names from the query result
+  existing_table_names <- existing_tables[[1]]
+  
+  # Finding tables that exist in both the database and the list
+  existing_tables_in_check <- intersect(existing_table_names, tables)
+  
+  # Returning only existing table names as a data frame
+  data.frame(Table_Name = existing_tables_in_check, stringsAsFactors = FALSE)
+}
+
+# Running the check and display results
+existing_tables_df <- get_existing_tables(con, tables_to_check)
+print(existing_tables_df)
+
+```
+
+
+## Inserting data into 'Airports'
+```{r airportInsertion, echo = TRUE, warning = FALSE, message = FALSE, eval = TRUE}
+# Function to create and populate the airports table dataframe
+create_airports_df <- function(bds.raw) {
+  
+  unique_airports <- unique(bds.raw[, c("dep_airport", "origin_state")])
+  
+  airports_df <- data.frame(
+    aid = seq_len(nrow(unique_airports)),
+    airportName = unique_airports$dep_airport,
+    airportState = unique_airports$origin_state,
+    airportCode = "ZZZ",
+    stringsAsFactors = FALSE
+  )
+  
+  return(airports_df)
+}
+
+airports_df <- create_airports_df(bds.raw)
+dbWriteTable(con, name = "airports", value = airports_df, row.names = FALSE, append = TRUE)
+
+```
+
+
+## Inserting data into 'Conditions'
+```{r conditionInsertion, echo = TRUE, warning = FALSE, message = FALSE, eval = TRUE}
+# Function to create and populate the conditions table dataframe
+create_conditions_df <- function(bds.raw) {
+  unique_conditions <- unique(bds.raw$sky_conditions)
+  
+  conditions_df <- data.frame(
+    cid = seq_along(unique_conditions),
+    sky_condition = unique_conditions,
+    explanation = "",
+    stringsAsFactors = FALSE
+  )
+  
+  return(conditions_df)
+}
+
+conditions_df <- create_conditions_df(bds.raw)
+dbWriteTable(con, name = "conditions", value = conditions_df, row.names = FALSE, append = TRUE)
+
+```
+
+
+
+## Inserting data into 'Wildlife_Sizes'
+```{r wildlifeSizeInsertion, echo = TRUE, warning = FALSE, message = FALSE, eval = TRUE}
+# Function to create and populate the wildlife sizes table dataframe
+create_wildlife_size_df <- function(bds.raw) {
+  unique_sizes <- unique(bds.raw$wildlife_size)
+  
+  wildlife_size_df <- data.frame(
+    wlsizeid = seq_along(unique_sizes),
+    description = unique_sizes,
+    stringsAsFactors = FALSE
+  )
+  
+  return(wildlife_size_df)
+}
+
+wildlife_size_df <- create_wildlife_size_df(bds.raw)
+dbWriteTable(con, name = "wildlife_sizes", value = wildlife_size_df, row.names = FALSE, append = TRUE)
+
+```
+
+
+##  Inserting data into 'Flights'
+```{r flightInsertion, echo = TRUE, warning = FALSE, message = FALSE, eval = TRUE}
+# Function to create and populate the flights table dataframe
+process_flights_df <- function(bds.raw, airports_df) {
+  
+  bds.raw$airport_key <- paste(bds.raw$dep_airport, bds.raw$origin_state, sep = "_")
+  airports_df$airport_key <- paste(airports_df$airportName, airports_df$airportState, sep = "_")
+  
+  match_indices <- match(bds.raw$airport_key, airports_df$airport_key)
+  bds.raw$originAirport <- airports_df$aid[match_indices]
+  
+ # bds.raw$airline[is.na(bds.raw$airline) | bds.raw$airline == ""] <- "Unknown"
+  bds.raw$aircraftType <- bds.raw$aircraft
+ # bds.raw$isHeavy <- ifelse(bds.raw$heavy_flag == "Yes", TRUE, FALSE)
+  bds.raw$isHeavy <- ifelse(
+  bds.raw$heavy_flag == "Yes", 
+  1, 
+  ifelse(bds.raw$heavy_flag == "unknown" | bds.raw$heavy_flag == "", NA, 0)
+)
+  
+  bds.raw$date <- as.Date(bds.raw$flight_date, format = "%m/%d/%y")
+  
+  flights_df <- data.frame(
+    fid = bds.raw$iid,
+    date = bds.raw$date,
+    originAirport = bds.raw$originAirport,
+    airlineName = bds.raw$airline,
+    aircraftType = bds.raw$aircraftType,
+    isHeavy = as.integer(bds.raw$isHeavy),
+    stringsAsFactors = FALSE
+  )
+  
+  return(flights_df)
+}
+
+flights_df <- process_flights_df(bds.raw, airports_df)
+dbWriteTable(con, name = "flights", value = flights_df, row.names = FALSE, append = TRUE)
+
+```
+
+## Inserting data into 'Wildlife_strikes'
+```{r wildlifeStrikeInsertion, echo = TRUE, warning = FALSE, message = FALSE, eval = TRUE}
+# Function to create and populate the wildlife_strikes table dataframe
+process_incidents_df <- function(bds.raw, conditions_df, wildlife_size_df, flights_df) {
+
+  # Assign fid values from flights_df to bds.raw
+  bds.raw$fid <- flights_df$fid
+
+  # Map conditions to get cid values from conditions_df
+  match_conditions <- match(bds.raw$sky_conditions, conditions_df$sky_condition)
+  bds.raw$conditions <- conditions_df$cid[match_conditions]
+
+  # Map wildlife size to get wlsizeid from wildlife_size_df
+  match_sizes <- match(bds.raw$wildlife_size, wildlife_size_df$description)
+  bds.raw$wlsize <- wildlife_size_df$wlsizeid[match_sizes]
+
+  # Handle altitude, replacing invalid values with 0
+  bds.raw$altitude_ft[is.na(bds.raw$altitude_ft) | bds.raw$altitude_ft == "" | bds.raw$altitude_ft < 0] <- 0
+  bds.raw$altitude_ft <- gsub(",", "", bds.raw$altitude_ft)  # Remove commas if present
+  bds.raw$altitude <- as.integer(bds.raw$altitude_ft)
+
+  # Assign unique incident IDs (iid)
+  bds.raw$iid <- seq_len(nrow(bds.raw))
+
+  # Create incidents_df for wildlife_strikes table insertion
+  incidents_df <- data.frame(
+    iid = bds.raw$iid,
+    fid = bds.raw$fid,
+    wlsize = bds.raw$wlsize,
+    impact = bds.raw$impact,
+    altitude = bds.raw$altitude,
+    conditions = bds.raw$conditions,
+    stringsAsFactors = FALSE
+  )
+
+  return(incidents_df)
+}
+
+# Run the process and insert into the wildlife_strikes table
+incidents_df <- process_incidents_df(bds.raw, conditions_df, wildlife_size_df, flights_df)
+dbWriteTable(con, name = "wildlife_strikes", value = incidents_df, row.names = FALSE, append = TRUE)
+
+```
+
+
+```{r displayingTablesForVerification, echo = FALSE, warning = FALSE, message = FALSE, eval = FALSE}
+# Display the first few rows of the wildlife.strikes table
+wildlife_strikes <- dbGetQuery(con, "SELECT * FROM wildlife_strikes LIMIT 10;")
+print(wildlife_strikes)
+
+# Display the first few rows of the flights table
+flights <- dbGetQuery(con, "SELECT * FROM flights LIMIT 10;")
+print(flights)
+
+# Display the first few rows of the airports table
+airports <- dbGetQuery(con, "SELECT * FROM airports LIMIT 10;")
+print(airports)
+
+# Display the first few rows of the wildlife_size table
+airports <- dbGetQuery(con, "SELECT * FROM wildlife_sizes LIMIT 10;")
+print(wildlife_size_df)
+
+```
+
+## Top States with Strikes
+```{r topFiveStates, echo = FALSE, warning = FALSE, message = FALSE, eval = TRUE}
+# SQL query to find the top 5 states with the greatest number of wildlife strike incidents
+top_states_query <- "
+  SELECT a.airportState, COUNT(*) AS num_incidents
+  FROM wildlife_strikes ws
+  JOIN flights f ON ws.fid = f.fid
+  JOIN airports a ON f.originAirport = a.aid
+  GROUP BY a.airportState
+  ORDER BY num_incidents DESC
+  LIMIT 5;
+"
+
+# Execute the query and store the results
+top_states <- dbGetQuery(con, top_states_query)
+
+# Display the results in a colorful, formatted table
+top_states %>%
+  kable("html", col.names = c("State", "Number of Incidents"),caption = "<b>Top 5 States by Wildlife Strike Incidents</b>") %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed", "responsive"), position = "center") %>%
+  row_spec(0, bold = TRUE, color = "white", background = "#FF5722") %>%     # Header styling
+  column_spec(1, bold = TRUE, background = "#FFCC80", color = "#BF360C") %>% # State column
+  column_spec(2, background = "#FFEB3B", color = "#F57F17")                  # Number of Incidents column
+```
+
+## Analysis by Airport
+```{r airportsWithBelowAverageIncidents, echo=FALSE, eval = TRUE, warning = FALSE}
+# SQL query to find airports with below average wildlife strike incidents
+analysis_airport_query <- "
+  SELECT airportName, COUNT(ws.iid) AS num_incidents
+  FROM wildlife_strikes ws
+  JOIN flights f ON ws.fid = f.fid
+  JOIN airports a ON f.originAirport = a.aid
+  GROUP BY airportName
+  HAVING num_incidents < (
+      SELECT AVG(num_incidents)
+      FROM (
+          SELECT COUNT(ws.iid) AS num_incidents
+          FROM wildlife_strikes ws
+          JOIN flights f ON ws.fid = f.fid
+          JOIN airports a ON f.originAirport = a.aid
+          GROUP BY airportName
+      ) AS avg_incidents
+  )
+  ORDER BY num_incidents DESC
+  LIMIT 5;
+"
+
+# Execute the query and store the results
+below_avg_airports <- dbGetQuery(con, analysis_airport_query)
+
+
+# Display the results in a colorful, formatted table
+below_avg_airports %>%
+  kable("html", col.names = c("Airport Name", "Number of Incidents"), caption = "<b>Airports with below Avg. Wildlife Strike Incidents</b>") %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed", "responsive"), position = "center") %>%
+  row_spec(0, bold = TRUE, color = "white", background = "#4CAF50") %>%     # Header styling
+  column_spec(1, bold = TRUE, background = "#AED581", color = "#1B5E20") %>% # Airport Name column
+  column_spec(2, background = "#FFF176", color = "#F57F17")                  # Number of Incidents column
+```
+
+## Analysis by Year
+```{r numberOfTypeOfIncidentsTotalPerYear, echo=FALSE, eval = TRUE, warning = FALSE}
+# SQL query to find the number of small, medium, and large wildlife strikes per year
+analysis_year_query <- "
+  SELECT YEAR(f.date) AS year, 
+         SUM(CASE WHEN ws.wlsize = 2 THEN 1 ELSE 0 END) AS small_strikes,
+         SUM(CASE WHEN ws.wlsize = 1 THEN 1 ELSE 0 END) AS medium_strikes,
+         SUM(CASE WHEN ws.wlsize = 3 THEN 1 ELSE 0 END) AS large_strikes
+  FROM wildlife_strikes ws
+  JOIN flights f ON ws.fid = f.fid
+  GROUP BY year
+  ORDER BY year;
+"
+
+# Execute the query and store the results in a dataframe
+results <- dbGetQuery(con, analysis_year_query)
+# Remove rows with NA values
+year_analysis <- na.omit(results)
+
+# Display the results in a colorful, formatted table
+year_analysis %>%
+  kable("html", col.names = c("Year", "Small Strikes", "Medium Strikes", "Large Strikes"), caption = "<b>Wildlife Strikes by Size</b>") %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed", "responsive"), position = "center") %>%
+  row_spec(0, bold = TRUE, color = "white", background = "#4CAF50") %>%   # Header styling
+  column_spec(1, bold = TRUE, background = "#FFDDC1", color = "#A52A2A") %>% # Year column
+  column_spec(2, background = "#D4E157", color = "#33691E") %>%            # Small Strikes column
+  column_spec(3, background = "#FFD54F", color = "#FF6F00") %>%            # Medium Strikes column
+  column_spec(4, background = "#FF8A80", color = "#B71C1C")                # Large Strikes column
+```
+
+## Trend by Year
+```{r trendFollowedByYear, echo=FALSE, eval = TRUE, warning = FALSE}
+# Creating a new column for total strikes by summing small, medium, and large strikes
+year_analysis$total_strikes <- year_analysis$small_strikes + 
+                               year_analysis$medium_strikes + 
+                               year_analysis$large_strikes
+
+y_range <- range(year_analysis$total_strikes)
+
+# Setting up colors and fonts
+line_color <- "#0073C2FF" # A richer blue color for the line
+point_color <- "#FF5733"  # Distinctive orange color for points
+label_color <- "black"    # Black color for the labels
+
+# Plotting the trend of total strikes by year
+plot(year_analysis$year, year_analysis$total_strikes, type = "o", col = line_color, 
+     xlab = "Year", 
+     ylab = "Total Number of Strikes", 
+     main = "Trend of Wildlife Strikes by Year",
+     ylim = c(y_range[1], y_range[2] * 1.2),
+     pch = 19,               # Solid points for better visibility
+     lwd = 2,                # Thicker line
+     cex.main = 1.5,         # Larger main title font size
+     cex.axis = 1.2,         # Larger axis font size
+     cex.lab = 1.3)          # Larger label font size
+
+# Adding grid lines with lighter color
+grid(nx = NULL, ny = NULL, col = "lightgray", lty = "dotted", lwd = 1)
+
+# Adding text labels with custom color
+text(year_analysis$year, year_analysis$total_strikes, labels = year_analysis$total_strikes, 
+     pos = 3, cex = 0.8, col = label_color, font = 2)
+
+# Highlighting points with custom color
+points(year_analysis$year, year_analysis$total_strikes, pch = 19, col = point_color)
+
+```
+
+## Stored Procedure Creation, Execution & Verification
+```{r storedProcedure, echo=FALSE, eval = TRUE, warning = FALSE}
+# Creating the update_log table if it does not exist
+dbExecute(con, "
+  CREATE TABLE IF NOT EXISTS update_log (
+  log_id INT PRIMARY KEY AUTO_INCREMENT,
+  modification_type VARCHAR(50),
+  table_name VARCHAR(50),
+  updated_at DATETIME,
+  original_values TEXT
+);
+")
+
+# Dropping PROCEDURE IF EXISTS
+dbExecute(con, "DROP PROCEDURE IF EXISTS update_wildlife_proced4;")
+
+
+# 2. Create the stored procedure for updating a strike
+dbExecute(con, "
+  CREATE PROCEDURE update_wildlife_proced4 (
+  IN strike_id INT,
+  IN new_wlsize INT,
+  IN new_impact TEXT,
+  IN new_altitude INT,
+  IN new_conditions INT
+)
+BEGIN
+  DECLARE original_wlsize INT;
+  DECLARE original_impact TEXT;
+  DECLARE original_altitude INT;
+  DECLARE original_conditions INT;
+
+  -- Retrieve original values for logging
+  SELECT wlsize, impact, altitude, conditions 
+  INTO original_wlsize, original_impact, original_altitude, original_conditions
+  FROM wildlife_strikes 
+  WHERE iid = strike_id;
+
+  -- Log the update
+  INSERT INTO update_log (modification_type, table_name, updated_at, original_values)
+  VALUES ('UPDATE', 'wildlife_strikes', NOW(), 
+          CONCAT('IID: ', strike_id, ', Original wlsize: ', original_wlsize, 
+                 ', Original impact: ', original_impact, 
+                 ', Original altitude: ', original_altitude, 
+                 ', Original conditions: ', original_conditions));
+
+  -- Update the incident
+  UPDATE wildlife_strikes
+  SET wlsize = new_wlsize, impact = new_impact, altitude = new_altitude, conditions = new_conditions
+  WHERE iid = strike_id;
+END ;
+")
+
+# Call the stored procedure to update a wildlife strike
+# Replace 202152 with an existing ID from your wildlife_strikes table
+dbExecute(con, "CALL update_wildlife_proced4(202152, 3, 'Wing Damage', 1200, 2);")
+
+# Check if the strike was updated
+updated_strike <- dbGetQuery(con, "SELECT * FROM wildlife_strikes WHERE fid = 202152;")
+print("Updated Strike:")
+print(updated_strike)
+
+# Check the update_log to see if the log entry was created
+log_result <- dbGetQuery(con, "SELECT * FROM update_log ORDER BY updated_at DESC;")
+print("Update Log Entries:")
+print(log_result)
+
+# Print the result as a colorful table
+log_result %>%
+  kable("html", escape = FALSE) %>%
+  kable_styling(full_width = FALSE, bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
+  row_spec(0, bold = TRUE, color = "white", background = "#4CAF50") %>%  # Header row
+  column_spec(1, bold = TRUE, color = "white", background = "#FF5733") %>% # Column 1 styling
+  column_spec(2, color = "#2E86C1") %>% # Column 2 styling
+  column_spec(3, background = "#AED6F1") %>% # Column 3 styling
+  column_spec(4, italic = TRUE)  # Column 4 styling
+
+```
+## Disconnect from Database
+```{r disconnectDatabase, eval = T, warning = F}
+# Disconnect from the database
+dbDisconnect(con)
+
+```
+
+

@@ -1,0 +1,6 @@
+"0","# Setting Up Database Connection Credentials"
+"0","host <- ""kendb3.cfa262emoldq.us-east-2.rds.amazonaws.com""  # AWS RDS endpoint"
+"0","port <- 3306  # MySQL default port"
+"0","dbname <- ""kendb""  # Name of my database"
+"0","user <- ""admin""  # my MySQL username"
+"0","password <- ""kenish123""  # my MySQL password"

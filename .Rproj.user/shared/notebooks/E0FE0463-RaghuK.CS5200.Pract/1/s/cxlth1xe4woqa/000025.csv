@@ -1,0 +1,4 @@
+"0",""
+"0","# Highlighting points with custom color"
+"0","points(year_analysis$year, year_analysis$total_strikes, pch = 19, col = point_color)"
+"0",""

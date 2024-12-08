@@ -1,0 +1,6 @@
+"0","# Replace with your AWS RDS credentials"
+"0","host <- ""kendb.cx0g202cysew.us-east-1.rds.amazonaws.com""  # AWS RDS endpoint"
+"0","port <- 3306  # MySQL default port"
+"0","dbname <- ""kendb""  # Name of your database"
+"0","user <- ""admin""  # Your MySQL username"
+"0","password <- ""admin123""  # Your MySQL password"

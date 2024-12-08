@@ -1,0 +1,7 @@
+"0","# Loading CSV data into a dataframe"
+"0","bds.raw <- read.csv(""BirdStrikesData-V4-SuF24.csv"", stringsAsFactors = FALSE)"
+"0","bds.raw[is.na(bds.raw)] <- ""unknown"""
+"0","bds.raw[bds.raw == """"] <- ""unknown"""
+"0",""
+"0","# Proof of unknown being inserted"
+"0","bds.raw[bds.raw$iid == 208561, ]"

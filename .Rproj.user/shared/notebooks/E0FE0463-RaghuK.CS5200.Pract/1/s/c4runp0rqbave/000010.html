@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<style>body{background-color:white;}</style>
+<script src="lib/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="lib/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
+<script src="lib/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="lib/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="lib/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="lib/kePrint-0.0.1/kePrint.js"></script>
+<link href="lib/lightable-0.0.1/lightable.css" rel="stylesheet" />
+
+</head>
+<body>
+<table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<caption><b>Wildlife Strikes by Size</b></caption>
+ <thead>
+  <tr>
+   <th style="text-align:left;font-weight: bold;color: white !important;background-color: rgba(76, 175, 80, 255) !important;">   </th>
+   <th style="text-align:right;font-weight: bold;color: white !important;background-color: rgba(76, 175, 80, 255) !important;"> Year </th>
+   <th style="text-align:right;font-weight: bold;color: white !important;background-color: rgba(76, 175, 80, 255) !important;"> Small Strikes </th>
+   <th style="text-align:right;font-weight: bold;color: white !important;background-color: rgba(76, 175, 80, 255) !important;"> Medium Strikes </th>
+   <th style="text-align:right;font-weight: bold;color: white !important;background-color: rgba(76, 175, 80, 255) !important;"> Large Strikes </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;font-weight: bold;color: rgba(165, 42, 42, 255) !important;background-color: rgba(255, 221, 193, 255) !important;"> 2 </td>
+   <td style="text-align:right;color: rgba(51, 105, 30, 255) !important;background-color: rgba(212, 225, 87, 255) !important;"> 2000 </td>
+   <td style="text-align:right;color: rgba(255, 111, 0, 255) !important;background-color: rgba(255, 213, 79, 255) !important;"> 800 </td>
+   <td style="text-align:right;color: rgba(183, 28, 28, 255) !important;background-color: rgba(255, 138, 128, 255) !important;"> 413 </td>
+   <td style="text-align:right;"> 154 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;color: rgba(165, 42, 42, 255) !important;background-color: rgba(255, 221, 193, 255) !important;"> 3 </td>
+   <td style="text-align:right;color: rgba(51, 105, 30, 255) !important;background-color: rgba(212, 225, 87, 255) !important;"> 2001 </td>
+   <td style="text-align:right;color: rgba(255, 111, 0, 255) !important;background-color: rgba(255, 213, 79, 255) !important;"> 776 </td>
+   <td style="text-align:right;color: rgba(183, 28, 28, 255) !important;background-color: rgba(255, 138, 128, 255) !important;"> 335 </td>
+   <td style="text-align:right;"> 119 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;color: rgba(165, 42, 42, 255) !important;background-color: rgba(255, 221, 193, 255) !important;"> 4 </td>
+   <td style="text-align:right;color: rgba(51, 105, 30, 255) !important;background-color: rgba(212, 225, 87, 255) !important;"> 2002 </td>
+   <td style="text-align:right;color: rgba(255, 111, 0, 255) !important;background-color: rgba(255, 213, 79, 255) !important;"> 1091 </td>
+   <td style="text-align:right;color: rgba(183, 28, 28, 255) !important;background-color: rgba(255, 138, 128, 255) !important;"> 434 </td>
+   <td style="text-align:right;"> 156 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;color: rgba(165, 42, 42, 255) !important;background-color: rgba(255, 221, 193, 255) !important;"> 5 </td>
+   <td style="text-align:right;color: rgba(51, 105, 30, 255) !important;background-color: rgba(212, 225, 87, 255) !important;"> 2003 </td>
+   <td style="text-align:right;color: rgba(255, 111, 0, 255) !important;background-color: rgba(255, 213, 79, 255) !important;"> 984 </td>
+   <td style="text-align:right;color: rgba(183, 28, 28, 255) !important;background-color: rgba(255, 138, 128, 255) !important;"> 420 </td>
+   <td style="text-align:right;"> 164 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;color: rgba(165, 42, 42, 255) !important;background-color: rgba(255, 221, 193, 255) !important;"> 6 </td>
+   <td style="text-align:right;color: rgba(51, 105, 30, 255) !important;background-color: rgba(212, 225, 87, 255) !important;"> 2004 </td>
+   <td style="text-align:right;color: rgba(255, 111, 0, 255) !important;background-color: rgba(255, 213, 79, 255) !important;"> 1134 </td>
+   <td style="text-align:right;color: rgba(183, 28, 28, 255) !important;background-color: rgba(255, 138, 128, 255) !important;"> 410 </td>
+   <td style="text-align:right;"> 148 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;color: rgba(165, 42, 42, 255) !important;background-color: rgba(255, 221, 193, 255) !important;"> 7 </td>
+   <td style="text-align:right;color: rgba(51, 105, 30, 255) !important;background-color: rgba(212, 225, 87, 255) !important;"> 2005 </td>
+   <td style="text-align:right;color: rgba(255, 111, 0, 255) !important;background-color: rgba(255, 213, 79, 255) !important;"> 1218 </td>
+   <td style="text-align:right;color: rgba(183, 28, 28, 255) !important;background-color: rgba(255, 138, 128, 255) !important;"> 470 </td>
+   <td style="text-align:right;"> 165 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;color: rgba(165, 42, 42, 255) !important;background-color: rgba(255, 221, 193, 255) !important;"> 8 </td>
+   <td style="text-align:right;color: rgba(51, 105, 30, 255) !important;background-color: rgba(212, 225, 87, 255) !important;"> 2006 </td>
+   <td style="text-align:right;color: rgba(255, 111, 0, 255) !important;background-color: rgba(255, 213, 79, 255) !important;"> 1429 </td>
+   <td style="text-align:right;color: rgba(183, 28, 28, 255) !important;background-color: rgba(255, 138, 128, 255) !important;"> 559 </td>
+   <td style="text-align:right;"> 171 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;color: rgba(165, 42, 42, 255) !important;background-color: rgba(255, 221, 193, 255) !important;"> 9 </td>
+   <td style="text-align:right;color: rgba(51, 105, 30, 255) !important;background-color: rgba(212, 225, 87, 255) !important;"> 2007 </td>
+   <td style="text-align:right;color: rgba(255, 111, 0, 255) !important;background-color: rgba(255, 213, 79, 255) !important;"> 1578 </td>
+   <td style="text-align:right;color: rgba(183, 28, 28, 255) !important;background-color: rgba(255, 138, 128, 255) !important;"> 548 </td>
+   <td style="text-align:right;"> 175 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;color: rgba(165, 42, 42, 255) !important;background-color: rgba(255, 221, 193, 255) !important;"> 10 </td>
+   <td style="text-align:right;color: rgba(51, 105, 30, 255) !important;background-color: rgba(212, 225, 87, 255) !important;"> 2008 </td>
+   <td style="text-align:right;color: rgba(255, 111, 0, 255) !important;background-color: rgba(255, 213, 79, 255) !important;"> 1535 </td>
+   <td style="text-align:right;color: rgba(183, 28, 28, 255) !important;background-color: rgba(255, 138, 128, 255) !important;"> 535 </td>
+   <td style="text-align:right;"> 188 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;color: rgba(165, 42, 42, 255) !important;background-color: rgba(255, 221, 193, 255) !important;"> 11 </td>
+   <td style="text-align:right;color: rgba(51, 105, 30, 255) !important;background-color: rgba(212, 225, 87, 255) !important;"> 2009 </td>
+   <td style="text-align:right;color: rgba(255, 111, 0, 255) !important;background-color: rgba(255, 213, 79, 255) !important;"> 2316 </td>
+   <td style="text-align:right;color: rgba(183, 28, 28, 255) !important;background-color: rgba(255, 138, 128, 255) !important;"> 702 </td>
+   <td style="text-align:right;"> 229 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;color: rgba(165, 42, 42, 255) !important;background-color: rgba(255, 221, 193, 255) !important;"> 12 </td>
+   <td style="text-align:right;color: rgba(51, 105, 30, 255) !important;background-color: rgba(212, 225, 87, 255) !important;"> 2010 </td>
+   <td style="text-align:right;color: rgba(255, 111, 0, 255) !important;background-color: rgba(255, 213, 79, 255) !important;"> 2340 </td>
+   <td style="text-align:right;color: rgba(183, 28, 28, 255) !important;background-color: rgba(255, 138, 128, 255) !important;"> 565 </td>
+   <td style="text-align:right;"> 216 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;font-weight: bold;color: rgba(165, 42, 42, 255) !important;background-color: rgba(255, 221, 193, 255) !important;"> 13 </td>
+   <td style="text-align:right;color: rgba(51, 105, 30, 255) !important;background-color: rgba(212, 225, 87, 255) !important;"> 2011 </td>
+   <td style="text-align:right;color: rgba(255, 111, 0, 255) !important;background-color: rgba(255, 213, 79, 255) !important;"> 2211 </td>
+   <td style="text-align:right;color: rgba(183, 28, 28, 255) !important;background-color: rgba(255, 138, 128, 255) !important;"> 546 </td>
+   <td style="text-align:right;"> 195 </td>
+  </tr>
+</tbody>
+</table> <script type="text/x-mathjax-config">MathJax.Hub.Config({tex2jax: {inlineMath: [["$","$"]]}})</script><script async src="https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+</body>
+</html>

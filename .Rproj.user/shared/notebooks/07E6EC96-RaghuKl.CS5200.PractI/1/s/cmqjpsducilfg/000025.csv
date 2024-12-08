@@ -1,0 +1,4 @@
+"0",""
+"0","# Adding text labels for each point"
+"0","text(year_analysis$year, year_analysis$total_strikes, labels = year_analysis$total_strikes, pos = 3, cex = 0.8)"
+"0",""

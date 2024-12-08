@@ -1,0 +1,3 @@
+"0",""
+"0","# Adding grid lines with lighter color"
+"0","grid(nx = NULL, ny = NULL, col = ""lightgray"", lty = ""dotted"", lwd = 1)"

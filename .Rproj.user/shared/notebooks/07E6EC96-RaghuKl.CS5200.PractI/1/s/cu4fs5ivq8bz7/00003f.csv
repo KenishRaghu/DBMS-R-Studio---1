@@ -1,0 +1,4 @@
+"0",""
+"0","# Display the first few rows of the wildlife_size table"
+"0","airports <- dbGetQuery(con, ""SELECT * FROM wildlife_sizes LIMIT 10;"")"
+"0","print(wildlife_size_df)"

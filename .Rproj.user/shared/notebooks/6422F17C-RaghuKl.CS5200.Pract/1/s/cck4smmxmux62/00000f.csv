@@ -1,0 +1,5 @@
+"0","# Display the first few rows of the wildlife.strikes table"
+"0","wildlife_strikes <- dbGetQuery(con, ""SELECT * FROM `wildlife.strikes` LIMIT 5;"")"
+"2","Error in dbSendQuery(conn, statement, ...) : 
+  could not run statement: Lost connection to server during query
+"

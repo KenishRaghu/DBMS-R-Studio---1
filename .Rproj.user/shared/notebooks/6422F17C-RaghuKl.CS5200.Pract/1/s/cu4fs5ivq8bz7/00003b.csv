@@ -1,0 +1,4 @@
+"0",""
+"0","# Display the first few rows of the flights table"
+"0","flights <- dbGetQuery(con, ""SELECT * FROM flights LIMIT 10;"")"
+"0","print(flights)"
